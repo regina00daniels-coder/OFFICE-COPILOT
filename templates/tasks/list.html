@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Tasks</h2>
+{% for task in tasks %}
+  <article><strong>{{ task.title }}</strong> - {{ task.status }}</article>
+{% empty %}<p>No tasks</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,13 @@
+<!doctype html>
+<html>
+  <head>
+    <title>{% block title %}Office Copilot{% endblock %}</title>
+  </head>
+  <body>
+    <header>
+      <h1>OFFICE-COPILOT</h1>
+      <p>Tenant: {{ request.tenant.name|default:"Unknown" }}</p>
+    </header>
+    <main>{% block content %}{% endblock %}</main>
+  </body>
+</html>

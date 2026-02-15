@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Presentations</h2>
+{% for presentation in presentations %}
+  <article><strong>{{ presentation.title }}</strong> - {{ presentation.status }}</article>
+{% empty %}<p>No presentations</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h2>Dashboard</h2>
+<ul>
+  <li>Tasks: {{ stats.tasks }}</li>
+  <li>Meetings: {{ stats.meetings }}</li>
+  <li>Reports: {{ stats.reports }}</li>
+  <li>Presentations: {{ stats.presentations }}</li>
+</ul>
+{% endblock %}
