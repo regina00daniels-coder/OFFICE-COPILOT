@@ -1,6 +1,7 @@
 
 ```
 OFFICE-COPILOT
+├─ APPLICATION_DESCRIPTION.md
 ├─ apps
 │  ├─ accounts
 │  │  ├─ admin.py
@@ -60,13 +61,20 @@ OFFICE-COPILOT
 │  │  │  └─ __pycache__
 │  │  │     └─ __init__.cpython-314.pyc
 │  │  ├─ models.py
+│  │  ├─ services
+│  │  │  ├─ ai_engine.py
+│  │  │  └─ __pycache__
+│  │  │     └─ ai_engine.cpython-314.pyc
 │  │  ├─ tests.py
+│  │  ├─ urls.py
 │  │  ├─ views.py
 │  │  ├─ __init__.py
 │  │  └─ __pycache__
 │  │     ├─ admin.cpython-314.pyc
 │  │     ├─ apps.cpython-314.pyc
 │  │     ├─ models.cpython-314.pyc
+│  │     ├─ urls.cpython-314.pyc
+│  │     ├─ views.cpython-314.pyc
 │  │     └─ __init__.cpython-314.pyc
 │  ├─ reporting
 │  │  ├─ admin.py
@@ -88,8 +96,10 @@ OFFICE-COPILOT
 │  │  ├─ admin.py
 │  │  ├─ apps.py
 │  │  ├─ migrations
+│  │  │  ├─ 0001_initial.py
 │  │  │  ├─ __init__.py
 │  │  │  └─ __pycache__
+│  │  │     ├─ 0001_initial.cpython-314.pyc
 │  │  │     └─ __init__.cpython-314.pyc
 │  │  ├─ models.py
 │  │  ├─ tests.py
@@ -120,22 +130,6 @@ OFFICE-COPILOT
 │  │     └─ __init__.cpython-314.pyc
 │  ├─ __init__.py
 │  └─ __pycache__
-│     └─ __init__.cpython-314.pyc
-├─ core
-│  ├─ admin.py
-│  ├─ apps.py
-│  ├─ migrations
-│  │  ├─ __init__.py
-│  │  └─ __pycache__
-│  │     └─ __init__.cpython-314.pyc
-│  ├─ models.py
-│  ├─ tests.py
-│  ├─ views.py
-│  ├─ __init__.py
-│  └─ __pycache__
-│     ├─ admin.cpython-314.pyc
-│     ├─ apps.cpython-314.pyc
-│     ├─ models.cpython-314.pyc
 │     └─ __init__.cpython-314.pyc
 ├─ db.sqlite3
 ├─ git
