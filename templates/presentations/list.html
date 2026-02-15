@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Presentations{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Presentation Studio</h2>
+    <p>Upload Word files and convert them into downloadable PowerPoint decks.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h3>Word to PowerPoint</h3>
+  <form method="post" action="{% url 'word-to-presentation-page' %}" enctype="multipart/form-data" class="inline-form">
+    {% csrf_token %}
+    <input type="file" name="file" accept=".docx" required>
+    <button type="submit">Generate Deck</button>
+  </form>
+  <p class="hint">Supported format: .docx. Each upload is analyzed into section-based slides.</p>
+
+  {% if upload_result %}
+    {% if upload_result.detail %}
+      <p class="error-text">{{ upload_result.detail }}</p>
+    {% else %}
+      <p>Presentation generated. <a href="{% url 'presentation-download' upload_result.presentation_id %}">Download latest deck</a>.</p>
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <h3>Recent Presentations</h3>
+  {% if presentations %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>Download</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for presentation in presentations %}
+          <tr>
+            <td>{{ presentation.title }}</td>
+            <td>{{ presentation.status }}</td>
+            <td>{{ presentation.created_at }}</td>
+            <td>
+              {% if presentation.file %}
+                <a href="{% url 'presentation-download' presentation.id %}">PPTX</a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No presentations yet.</p>
+  {% endif %}
+</section>
+{% endblock %}

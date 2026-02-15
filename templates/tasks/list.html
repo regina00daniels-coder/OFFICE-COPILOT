@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Task Workspace</h2>
+    <p>Manage tasks and run Excel import/export for bulk operations.</p>
+  </div>
+  <a class="btn" href="{% url 'task-analyst-page' %}">Open Analyst Lab</a>
+</section>
+
+<section class="card">
+  <h3>Export to Excel</h3>
+  <form method="get" action="{% url 'task-export-excel' %}" class="inline-form">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="">All</option>
+      {% for value, label in status_choices %}
+        <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="priority">Priority</label>
+    <select id="priority" name="priority">
+      <option value="">All</option>
+      {% for value, label in priority_choices %}
+        <option value="{{ value }}">{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <label for="due_from">Due From</label>
+    <input id="due_from" type="date" name="due_from">
+
+    <label for="due_to">Due To</label>
+    <input id="due_to" type="date" name="due_to">
+
+    <button type="submit">Download .xlsx</button>
+  </form>
+</section>
+
+<section class="card">
+  <h3>Import from Excel</h3>
+  <form method="post" action="{% url 'task-import-page' %}" enctype="multipart/form-data" class="inline-form">
+    {% csrf_token %}
+    <label for="file">Excel File (.xlsx)</label>
+    <input id="file" name="file" type="file" accept=".xlsx" required>
+    <button type="submit">Import Tasks</button>
+  </form>
+
+  {% if import_result %}
+    {% if import_result.detail %}
+      <p><strong>Import error:</strong> {{ import_result.detail }}</p>
+    {% else %}
+      <p>
+        <strong>Import summary:</strong>
+        processed={{ import_result.total_rows_processed }},
+        inserted={{ import_result.rows_inserted }},
+        skipped={{ import_result.rows_skipped }}
+      </p>
+      {% if import_result.errors %}
+        <h4>Row Errors</h4>
+        <ul>
+          {% for item in import_result.errors %}
+            <li>Row {{ item.row }}: {{ item.error }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endif %}
+  {% endif %}
+</section>
+
+<section class="card">
+  <h3>Current Tasks</h3>
+  {% if tasks %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Priority</th>
+          <th>Due Date</th>
+          <th>Assigned To</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for task in tasks %}
+          <tr>
+            <td>{{ task.title }}</td>
+            <td>{{ task.status }}</td>
+            <td>{{ task.priority }}</td>
+            <td>{{ task.due_date|default:"-" }}</td>
+            <td>{% if task.assigned_to %}{{ task.assigned_to.username }}{% else %}-{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No tasks available.</p>
+  {% endif %}
+</section>
+{% endblock %}

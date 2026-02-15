@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Reports</h2>
+{% for report in reports %}
+  <article><strong>{{ report.name }}</strong> - {{ report.report_type }}</article>
+{% empty %}<p>No reports</p>{% endfor %}
+{% endblock %}

@@ -1,0 +1,48 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Office Copilot{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  </head>
+  <body>
+    <div class="bg-orb orb-a"></div>
+    <div class="bg-orb orb-b"></div>
+    <header class="site-header">
+      <div class="brand">
+        <span class="brand-tag">OFFICE-COPILOT</span>
+        <p class="tenant-line">Tenant: {{ request.tenant.name|default:"Unknown" }}</p>
+      </div>
+      <nav class="nav">
+        <a href="{% url 'dashboard-page' %}">Dashboard</a>
+        <a href="{% url 'task-list-page' %}">Tasks</a>
+        <a href="{% url 'reporting-workspace' %}">Reporting Lab</a>
+        <a href="{% url 'presentation-workspace' %}">Presentations</a>
+      </nav>
+      <div class="auth-block">
+        {% if request.user.is_authenticated %}
+          <span class="user-pill">{{ request.user.username }}</span>
+          <a class="btn ghost" href="{% url 'logout' %}">Logout</a>
+        {% else %}
+          <a class="btn ghost" href="{% url 'login' %}">Login</a>
+          <a class="btn" href="{% url 'register' %}">Register</a>
+        {% endif %}
+      </div>
+    </header>
+    <main class="site-main">
+      {% if messages %}
+        <section class="messages">
+          {% for message in messages %}
+            <article class="message">{{ message }}</article>
+          {% endfor %}
+        </section>
+      {% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

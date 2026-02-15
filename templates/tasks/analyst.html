@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Task Analyst Workflow{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Task Analyst Workflow</h2>
+    <p>Upload Excel, run analyst-grade cleaning and anomaly checks, then download a dashboard workbook with pivots and charts.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h3>Run Analysis</h3>
+  <form method="post" action="{% url 'task-analyst-run' %}" enctype="multipart/form-data" class="inline-form">
+    {% csrf_token %}
+    <input name="file" type="file" accept=".xlsx,.xls" required>
+    <button type="submit">Analyze Workbook</button>
+  </form>
+  <p class="hint">Workflow nodes: Load -> Clean -> Detect anomalies -> Build pivots -> Compose charts -> Publish dashboard workbook.</p>
+</section>
+
+{% if analyst_result %}
+  <section class="card">
+    <h3>Latest Result</h3>
+    {% if analyst_result.detail %}
+      <p class="error-text">{{ analyst_result.detail }}</p>
+    {% else %}
+      <div class="kpi-grid">
+        <article><span>Uploaded Rows</span><strong>{{ analyst_result.rows_uploaded }}</strong></article>
+        <article><span>Rows After Cleaning</span><strong>{{ analyst_result.rows_after_cleaning }}</strong></article>
+        <article><span>Rows Removed</span><strong>{{ analyst_result.rows_removed }}</strong></article>
+        <article><span>Duplicate Titles</span><strong>{{ analyst_result.duplicate_titles }}</strong></article>
+        <article><span>Anomalous Due Dates</span><strong>{{ analyst_result.anomalous_due_dates }}</strong></article>
+      </div>
+      <p><a href="{% url 'task-analyst-download' analyst_result.run_id %}">Download Analyst Workbook</a></p>
+    {% endif %}
+  </section>
+{% endif %}
+
+<section class="card">
+  <h3>Run History</h3>
+  {% if runs %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Status</th>
+          <th>Created</th>
+          <th>By</th>
+          <th>Rows</th>
+          <th>Workbook</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for run in runs %}
+          <tr>
+            <td>#{{ run.id }}</td>
+            <td>{{ run.status }}</td>
+            <td>{{ run.created_at }}</td>
+            <td>{{ run.user.username }}</td>
+            <td>{{ run.summary.rows_after_cleaning|default:"-" }}</td>
+            <td>
+              {% if run.workbook_file %}
+                <a href="{% url 'task-analyst-download' run.id %}">Download</a>
+              {% else %}
+                -
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No analysis runs yet.</p>
+  {% endif %}
+</section>
+{% endblock %}
