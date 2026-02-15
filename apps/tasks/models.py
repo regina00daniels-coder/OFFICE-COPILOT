@@ -59,3 +59,24 @@ class AIJob(models.Model):
 
     def __str__(self):
         return f"{self.job_type} - {self.tenant.name}"
+
+
+class TaskAnalysisRun(models.Model):
+    class Status(models.TextChoices):
+        PROCESSING = "processing", "Processing"
+        COMPLETED = "completed", "Completed"
+        FAILED = "failed", "Failed"
+
+    tenant = models.ForeignKey(Tenant, on_delete=models.CASCADE, related_name="task_analysis_runs")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="task_analysis_runs")
+    source_file = models.FileField(upload_to="task_analysis/source/")
+    workbook_file = models.FileField(upload_to="task_analysis/output/", blank=True)
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PROCESSING)
+    summary = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"Task Analysis {self.id} - {self.tenant.name}"

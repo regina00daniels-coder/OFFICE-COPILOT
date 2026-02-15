@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}Reporting Workspace{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Reporting Workspace</h2>
+    <p>Analyze real business datasets and generate presentation-ready report decks from uploaded documents.</p>
+  </div>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h3>Data Analysis Lab</h3>
+    <form method="post" action="{% url 'reporting-data-run' %}" enctype="multipart/form-data" class="form-grid">
+      {% csrf_token %}
+      <label>Upload Dataset (.xlsx, .xls, .csv)</label>
+      <input name="file" type="file" accept=".xlsx,.xls,.csv" required>
+      <button type="submit">Run Data Analyst Workflow</button>
+    </form>
+    <p class="hint">Includes profiling, cleaning, outlier detection, pivots, charts, and dashboard workbook output.</p>
+    {% if data_result %}
+      {% if data_result.detail %}
+        <p class="error-text">{{ data_result.detail }}</p>
+      {% else %}
+        <div class="kpi-grid">
+          <article><span>Uploaded Rows</span><strong>{{ data_result.rows_uploaded }}</strong></article>
+          <article><span>Clean Rows</span><strong>{{ data_result.rows_after_cleaning }}</strong></article>
+          <article><span>Rows Removed</span><strong>{{ data_result.rows_removed }}</strong></article>
+          <article><span>Outliers</span><strong>{{ data_result.outlier_count }}</strong></article>
+        </div>
+        <p><a href="{% url 'reporting-data-download' data_result.run_id %}">Download Analyst Workbook</a></p>
+      {% endif %}
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h3>Document to PowerPoint Report</h3>
+    <form method="post" action="{% url 'reporting-doc-run' %}" enctype="multipart/form-data" class="form-grid">
+      {% csrf_token %}
+      <label>Upload Document (.txt, .md, .docx, .pdf)</label>
+      <input name="file" type="file" accept=".txt,.md,.docx,.pdf" required>
+      <button type="submit">Generate PowerPoint Report</button>
+    </form>
+    <p class="hint">System reads and summarizes uploaded content into a polished slide deck.</p>
+    {% if doc_result %}
+      {% if doc_result.detail %}
+        <p class="error-text">{{ doc_result.detail }}</p>
+      {% else %}
+        <div class="kpi-grid">
+          <article><span>Slides</span><strong>{{ doc_result.slides_generated }}</strong></article>
+          <article><span>Paragraphs</span><strong>{{ doc_result.paragraphs_analyzed }}</strong></article>
+        </div>
+        <p><a href="{% url 'reporting-doc-download' doc_result.run_id %}">Download PowerPoint Report</a></p>
+      {% endif %}
+    {% endif %}
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h3>Recent Data Runs</h3>
+    {% if data_runs %}
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Status</th><th>Rows</th><th>Created</th><th>Download</th></tr>
+        </thead>
+        <tbody>
+          {% for run in data_runs %}
+            <tr>
+              <td>#{{ run.id }}</td>
+              <td>{{ run.status }}</td>
+              <td>{{ run.summary.rows_after_cleaning|default:"-" }}</td>
+              <td>{{ run.created_at }}</td>
+              <td>
+                {% if run.workbook_file %}
+                  <a href="{% url 'reporting-data-download' run.id %}">Workbook</a>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No data analysis runs yet.</p>
+    {% endif %}
+  </article>
+
+  <article class="card">
+    <h3>Recent Document Report Runs</h3>
+    {% if doc_runs %}
+      <table class="data-table">
+        <thead>
+          <tr><th>ID</th><th>Status</th><th>Slides</th><th>Created</th><th>Download</th></tr>
+        </thead>
+        <tbody>
+          {% for run in doc_runs %}
+            <tr>
+              <td>#{{ run.id }}</td>
+              <td>{{ run.status }}</td>
+              <td>{{ run.summary.slides_generated|default:"-" }}</td>
+              <td>{{ run.created_at }}</td>
+              <td>
+                {% if run.powerpoint_file %}
+                  <a href="{% url 'reporting-doc-download' run.id %}">PPTX</a>
+                {% else %}
+                  -
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No document report runs yet.</p>
+    {% endif %}
+  </article>
+</section>
+{% endblock %}

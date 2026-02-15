@@ -1,11 +1,147 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
 {% block content %}
-<h2>Dashboard</h2>
-<ul>
-  <li>Tasks: {{ stats.tasks }}</li>
-  <li>Meetings: {{ stats.meetings }}</li>
-  <li>Reports: {{ stats.reports }}</li>
-  <li>Presentations: {{ stats.presentations }}</li>
-</ul>
+<section class="page-header">
+  <div>
+    <h2>Operations Dashboard</h2>
+    <p>Tenant: {{ stats.tenant_name }}</p>
+  </div>
+  <div class="inline-form">
+    <a class="btn ghost" href="{% url 'task-list-page' %}">Task Workspace</a>
+    <a class="btn" href="{% url 'reporting-workspace' %}">Reporting Lab</a>
+    <a class="btn ghost" href="{% url 'presentation-workspace' %}">Presentation Studio</a>
+  </div>
+</section>
+
+<section class="kpi-grid">
+  <article><span>Total Tasks</span><strong>{{ stats.total_tasks }}</strong></article>
+  <article><span>Completed</span><strong>{{ stats.completed_tasks }}</strong></article>
+  <article><span>Overdue</span><strong>{{ stats.overdue_tasks }}</strong></article>
+  <article><span>Completion Rate</span><strong>{{ stats.completion_rate }}%</strong></article>
+  <article><span>Meetings</span><strong>{{ stats.upcoming_meetings }}</strong></article>
+  <article><span>Reports</span><strong>{{ stats.total_reports }}</strong></article>
+  <article><span>Presentations</span><strong>{{ stats.total_presentations }}</strong></article>
+  <article><span>Data Runs</span><strong>{{ stats.data_runs_completed }}/{{ stats.data_runs_total }}</strong></article>
+  <article><span>Data Success</span><strong>{{ stats.data_run_success_rate }}%</strong></article>
+  <article><span>Doc Runs</span><strong>{{ stats.document_runs_completed }}/{{ stats.document_runs_total }}</strong></article>
+  <article><span>Doc Success</span><strong>{{ stats.doc_run_success_rate }}%</strong></article>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h3>Data Quality Trend</h3>
+    <div class="chart-shell"><canvas id="dataQualityChart"></canvas></div>
+  </article>
+  <article class="card">
+    <h3>Document Output Trend</h3>
+    <div class="chart-shell"><canvas id="documentTrendChart"></canvas></div>
+  </article>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h3>Pipeline Health</h3>
+    <div class="chart-shell"><canvas id="pipelineHealthChart"></canvas></div>
+  </article>
+  <article class="card">
+    <h3>Keyword Radar</h3>
+    <div class="chart-shell"><canvas id="keywordChart"></canvas></div>
+  </article>
+</section>
+
+<section class="card">
+  <h3>Runtime Acceleration Profile</h3>
+  <div class="kpi-grid">
+    <article><span>CPU Cores</span><strong>{{ insights.runtime.cpu_count }}</strong></article>
+    <article><span>CPU Target</span><strong>{{ insights.runtime.cpu_target }}</strong></article>
+    <article><span>Worker Threads</span><strong>{{ insights.runtime.worker_threads }}</strong></article>
+    <article><span>Device</span><strong>{{ insights.runtime.device }}</strong></article>
+    <article><span>GPU</span><strong>{{ insights.runtime.gpu_name|default:"None" }}</strong></article>
+    <article><span>Embedding Model</span><strong>{{ insights.runtime.embedding_model }}</strong></article>
+  </div>
+</section>
+
+<section class="grid-2">
+  <article class="card">
+    <h3>Recent Tasks</h3>
+    {% for item in activity.tasks %}
+      <p>{{ item.title }} <span class="hint">({{ item.status }})</span></p>
+    {% empty %}
+      <p>No recent tasks.</p>
+    {% endfor %}
+  </article>
+  <article class="card">
+    <h3>Recent Meetings</h3>
+    {% for item in activity.meetings %}
+      <p>{{ item.title }} <span class="hint">({{ item.scheduled_for }})</span></p>
+    {% empty %}
+      <p>No recent meetings.</p>
+    {% endfor %}
+  </article>
+</section>
+
+<section class="card">
+  <h3>Recent Reports</h3>
+  {% for item in activity.reports %}
+    <p>{{ item.name }} <span class="hint">({{ item.type }})</span></p>
+  {% empty %}
+    <p>No recent reports.</p>
+  {% endfor %}
+</section>
+
+{{ insights|json_script:"dashboard-insights-data" }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  (function () {
+    const payload = JSON.parse(document.getElementById("dashboard-insights-data").textContent);
+
+    new Chart(document.getElementById("dataQualityChart"), {
+      type: "line",
+      data: {
+        labels: payload.data_quality_trend.labels,
+        datasets: [
+          { label: "Cleaned Rows", data: payload.data_quality_trend.cleaned_rows, borderColor: "#3dd6b2", tension: 0.25 },
+          { label: "Rows Removed", data: payload.data_quality_trend.rows_removed, borderColor: "#ff6f91", tension: 0.25 },
+          { label: "Outliers", data: payload.data_quality_trend.outliers, borderColor: "#ffce56", tension: 0.25 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#d6e7ff" } } }, scales: { x: { ticks: { color: "#9eb0cf" } }, y: { ticks: { color: "#9eb0cf" } } } }
+    });
+
+    new Chart(document.getElementById("documentTrendChart"), {
+      type: "bar",
+      data: {
+        labels: payload.document_trend.labels,
+        datasets: [{ label: "Slides Generated", data: payload.document_trend.slides, backgroundColor: "#4ea3ff" }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: "#d6e7ff" } } }, scales: { x: { ticks: { color: "#9eb0cf" } }, y: { ticks: { color: "#9eb0cf" } } } }
+    });
+
+    new Chart(document.getElementById("pipelineHealthChart"), {
+      type: "doughnut",
+      data: {
+        labels: ["Data Completed", "Data Failed", "Doc Completed", "Doc Failed"],
+        datasets: [{
+          data: [
+            payload.pipeline_health.data_completed,
+            payload.pipeline_health.data_failed,
+            payload.pipeline_health.doc_completed,
+            payload.pipeline_health.doc_failed
+          ],
+          backgroundColor: ["#3dd6b2", "#ff6f91", "#4ea3ff", "#ffce56"]
+        }]
+      },
+      options: { plugins: { legend: { labels: { color: "#d6e7ff" } } } }
+    });
+
+    new Chart(document.getElementById("keywordChart"), {
+      type: "bar",
+      data: {
+        labels: payload.top_keywords.labels,
+        datasets: [{ label: "Keyword Frequency", data: payload.top_keywords.counts, backgroundColor: "#7bb8ff" }]
+      },
+      options: { indexAxis: "y", plugins: { legend: { labels: { color: "#d6e7ff" } } }, scales: { x: { ticks: { color: "#9eb0cf" } }, y: { ticks: { color: "#9eb0cf" } } } }
+    });
+  })();
+</script>
 {% endblock %}

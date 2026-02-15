@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import AIJob, Task
+from .models import AIJob, Task, TaskAnalysisRun
 
 
 @admin.register(Task)
@@ -13,4 +13,10 @@ class TaskAdmin(admin.ModelAdmin):
 @admin.register(AIJob)
 class AIJobAdmin(admin.ModelAdmin):
     list_display = ("job_type", "tenant", "user", "status", "created_at")
+    list_filter = ("tenant", "status")
+
+
+@admin.register(TaskAnalysisRun)
+class TaskAnalysisRunAdmin(admin.ModelAdmin):
+    list_display = ("id", "tenant", "user", "status", "created_at")
     list_filter = ("tenant", "status")

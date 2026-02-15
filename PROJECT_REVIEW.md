@@ -1,243 +1,131 @@
-# OFFICE-COPILOT Detailed Project Review
+# OFFICE-COPILOT Project Review (Current State)
 
-## Executive Summary
+## Product Purpose
 
-The codebase is a **strong early scaffold** of a Django multi-app system, but it is currently at a **prototype baseline** rather than an operational product. The architecture direction in `APPLICATION_DESCRIPTION.md` is solid and ambitious, but only a limited subset is implemented:
+OFFICE-COPILOT is a tenant-aware operations intelligence platform for office teams.  
+Its primary value is:
 
-- Core tenant and custom user foundations exist.
-- A minimal AI-backed presentation endpoint exists.
-- Most domain modules (dashboard, meetings, reporting, tasks as business tasks, and presentation repository features) remain placeholders.
+1. Analyze real business datasets uploaded by users (`.csv`, `.xlsx`, `.xls`).
+2. Produce analyst-style outputs (cleaned data, profiling, pivots, charts, dashboard workbook).
+3. Convert uploaded documents (`.txt`, `.md`, `.docx`, `.pdf`) into PowerPoint report decks.
+4. Present operational metrics and pipeline health on a web dashboard.
 
-In short: **vision is clear, implementation is 15–25% complete** for MVP readiness.
-
----
-
-## Scope Reviewed
-
-Reviewed against the concept in:
-
-- `APPLICATION_DESCRIPTION.md`
-
-And implementation across:
-
-- Project configuration (`office_copilot/settings.py`, `office_copilot/urls.py`, `office_copilot/middleware.py`)
-- Domain apps and models (`apps/*/models.py`)
-- Views and routes (`apps/*/views.py`, `apps/presentations/urls.py`)
-- Test coverage (`apps/*/tests.py`)
+This is not a task-priority analytics tool. Tasks remain a workflow module, while data analysis lives in Reporting.
 
 ---
 
-## 1) Concept-to-Implementation Coverage
+## Implemented Capability Snapshot
 
-## 1.1 Accounts / RBAC
+## 1) Multi-Tenant Foundation
 
-**Concept expectation**: extended user profile, role-based access control, permission segregation.
+- Tenant model and tenant resolution middleware are active.
+- Tenant is resolved by:
+  - `X-Tenant` header
+  - host domain
+  - authenticated user fallback
+- Access checks enforce tenant boundaries for dashboard/reporting/task/presentation flows.
 
-**Current state**:
+## 2) Reporting Data Lab (Core Excel Intelligence)
 
-- Custom `User` model exists with tenant relation.
-- No explicit role field, custom permission model, or group policy mapping in app code.
-- No auth workflow views/endpoints implemented beyond Django defaults.
+Implemented in `apps/reporting`:
 
-**Assessment**: foundational but incomplete.
+- Data upload + analysis workflow (`DataAnalysisRun`)
+- Accepted dataset formats: `.csv`, `.xlsx`, `.xls`
+- Processing pipeline:
+  - schema normalization
+  - dtype inference
+  - missing-value handling
+  - duplicate removal
+  - outlier scanning (IQR)
+  - pivot generation
+  - category frequency profiling
+  - numeric stats + correlations
+- Workbook generation with sheets such as:
+  - `Dashboard`
+  - `Column_Profile`
+  - `Missing_Before_Clean`
+  - `Cleaned_Data` (auto-split into multiple sheets for large datasets)
+  - `Pivot_1`, `Pivot_2`
+  - `Numeric_Stats`, `Correlation`
+  - `Top_Categories`, `Top_Category_Chart`
+  - `Analyst_Notes`
+- Large-file safeguard:
+  - respects Excel row limit (1,048,576)
+  - splits cleaned data across multiple sheets to prevent row overflow errors
 
-## 1.2 Tenants / Multi-tenancy
+## 3) Document-to-PowerPoint Reporting
 
-**Concept expectation**: robust tenant isolation and assignment of resources/users.
+Implemented via `DocumentReportRun`:
 
-**Current state**:
+- Accepted formats: `.txt`, `.md`, `.docx`, `.pdf`
+- Extracts text and generates PowerPoint report decks
+- Produces:
+  - executive snapshot slide
+  - AI key points slide
+  - section slides from content chunks
+- Persists generated `.pptx` for tenant-scoped downloads
 
-- `Tenant` model exists (`name`, `domain`, status fields).
-- Hostname-based tenant resolution middleware exists.
-- No broad tenant scoping enforcement in query layer.
+## 4) Dashboard (Web)
 
-**Assessment**: promising start, but isolation is currently convention-based and fragile.
+Dashboard now includes:
 
-## 1.3 Dashboard
+- KPI cards (tasks, meetings, reports, presentations, run success rates)
+- Chart panels:
+  - Data Quality Trend
+  - Document Output Trend
+  - Pipeline Health
+  - Keyword Radar
+- Runtime profile panel:
+  - CPU count
+  - CPU target
+  - worker threads
+  - device/GPU name (if available)
+  - embedding model identifier
 
-**Concept expectation**: role-aware operational KPIs.
+## 5) Auth and UX
 
-**Current state**:
-
-- App exists but no models/views/business logic for metrics.
-
-**Assessment**: unimplemented.
-
-## 1.4 Meetings
-
-**Concept expectation**: scheduling, participants, overlap prevention, attendance.
-
-**Current state**:
-
-- App exists, models and views are placeholders.
-
-**Assessment**: unimplemented.
-
-## 1.5 Tasks
-
-**Concept expectation**: assignment, status workflow, deadlines, visibility.
-
-**Current state**:
-
-- `apps/tasks` currently stores `AIJob` records for AI operations.
-- No human task entity (title/assignee/due date/priority/status) implemented.
-
-**Assessment**: current implementation diverges from conceptual task module purpose.
-
-## 1.6 Presentations
-
-**Concept expectation**: upload, categorize, meeting attachments, usage history.
-
-**Current state**:
-
-- One endpoint: `POST /presentations/ai/text-to-presentation/`.
-- Basic sentence-splitting pseudo-AI service.
-- No presentation file model, no categorization, no meeting linking, no access audit.
-
-**Assessment**: partial prototype feature only.
-
-## 1.7 Reporting
-
-**Concept expectation**: aggregated analytics, CSV/PDF exports, role-restricted access.
-
-**Current state**:
-
-- App exists but no reporting models, queries, or export pipeline.
-
-**Assessment**: unimplemented.
-
----
-
-## 2) Architecture & Engineering Review
-
-### Strengths
-
-- Clean modular app structure aligns with conceptual domains.
-- Custom auth model already configured (`AUTH_USER_MODEL`).
-- Tenant-aware middleware and domain field indicate early multi-tenant intent.
-- Clear stepping-stone feature in presentations AI endpoint.
-
-### Gaps / Risks
-
-1. **Tenant isolation risk**
-   - Tenant discovery is middleware-level only; no systematic queryset-level enforcement.
-2. **Security baseline risk**
-   - Hardcoded secret key and `DEBUG=True` in main settings are not production-safe.
-3. **API reliability risk**
-   - `json.loads(request.body)` lacks validation and exception handling.
-   - `@csrf_exempt` on authenticated endpoint increases attack surface.
-4. **Domain mismatch risk**
-   - `tasks` app currently models AI jobs, not operational employee tasks from concept.
-5. **Quality risk**
-   - Tests are placeholders; effectively no regression safety net.
-6. **URL coverage risk**
-   - Root URL config only includes presentations routes (aside from admin).
+- Styled login/register/logout flow
+- Shared visual system (`static/css/app.css`)
+- Workspace navigation:
+  - Dashboard
+  - Tasks
+  - Reporting Lab
+  - Presentations
 
 ---
 
-## 3) Data Model Maturity
+## Runtime/Performance Profile
 
-Current persistent entities:
+Current runtime controls:
 
-- `Tenant`
-- `User` (tenant-linked)
-- `AIJob`
+- `OFFICE_CPU_TARGET` (default `0.75`)
+- thread caps set for numerical workloads (`OMP`, `MKL`, etc.)
+- GPU-aware detection path (CUDA/`nvidia-smi` when available)
 
-Missing core entities for concept goals:
+Semantic summarization path:
 
-- Employee role profile / role enum / policy assignment model
-- Task entity and task activity/audit models
-- Meeting, participant, attendance, and room/resource entities
-- Presentation asset metadata and meeting linkage
-- Reporting snapshot/metric materialization (or query views)
-
-**Conclusion**: schema is in pre-MVP phase.
+- primary hook for embedding-model backend
+- robust fallback keyword/sentence scoring path for compatibility
 
 ---
 
-## 4) Security, Compliance, and Operations Readiness
+## Known Constraints
 
-### Immediate hardening needed
-
-- Move secret key and debug flags to env-driven settings split.
-- Configure `ALLOWED_HOSTS`, secure cookie settings, HTTPS/security headers.
-- Add input validation, explicit request schema checks, and error-safe responses.
-- Reconsider CSRF exemption on session-authenticated endpoints.
-
-### Compliance-adjacent concerns
-
-- No audit logging for sensitive operations.
-- No data retention/export/deletion workflows.
-- No explicit role restriction decorators/policies around cross-tenant resources.
+1. Native Excel slicer objects are not authored directly via `openpyxl`.
+   - Pivot sheets are generated and ready for slicer insertion in desktop Excel.
+2. Python 3.14 ecosystem compatibility is still evolving for some heavy NLP stacks.
+   - fallback summarization path remains stable and production-safe.
+3. Dashboard is now substantially richer, but can still be pushed further:
+   - drill-down pages
+   - cross-filter interactions
+   - scheduled report jobs
 
 ---
 
-## 5) Testing and Delivery Maturity
+## Suggested Next Priorities
 
-Current state:
-
-- Test files are generated placeholders only.
-- No domain tests, no tenant isolation tests, no auth/permission tests, no API contract tests.
-
-Recommended baseline before feature expansion:
-
-- Tenant middleware tests.
-- Presentation endpoint tests: auth required, bad payload, tenant missing, success path.
-- Model validation tests for critical entities.
-- Smoke test per app route.
-
----
-
-## 6) Prioritized Roadmap (Practical)
-
-## Phase 1 — Foundation (1–2 weeks)
-
-- Establish settings split (`base/dev/prod`) and env variables.
-- Introduce lint + formatting + test CI.
-- Add initial automated tests for existing behavior.
-- Add global API error/validation conventions.
-
-## Phase 2 — Core Domain MVP (2–4 weeks)
-
-- Implement true Task domain model/workflow.
-- Implement Meeting model + overlap validation.
-- Implement Presentation model with file upload and tenant ownership.
-- Add dashboard queries for counts and near-term workload.
-
-## Phase 3 — Access & Isolation (1–2 weeks)
-
-- Add role model and enforced permission policy.
-- Implement tenant-scoped managers/querysets.
-- Add object-level access checks in endpoints/services.
-
-## Phase 4 — Reporting + Ops (2–3 weeks)
-
-- Build reporting aggregation endpoints.
-- Add CSV export first, PDF second.
-- Add operational logs and audit trails.
-
-## Phase 5 — AI Feature Hardening (parallel)
-
-- Replace naive sentence-splitting with provider abstraction.
-- Add async job queue (Celery/RQ) for long-running AI jobs.
-- Add job retries, statuses, and failure reason observability.
-
----
-
-## 7) Suggested MVP Definition (Narrow and Achievable)
-
-A credible first MVP should include:
-
-- Tenant-aware login and role-based access (admin/staff minimum).
-- Task CRUD with assignee, due date, status, and dashboard counts.
-- Meeting scheduling with overlap prevention and participant list.
-- Presentation upload and attachment to meeting.
-- Basic reporting endpoint (task completion + meeting volume by date range).
-
-This MVP would align tightly with the conceptual description while remaining realistically deliverable.
-
----
-
-## Final Verdict
-
-OFFICE-COPILOT has a strong conceptual blueprint and a good initial Django skeleton. However, the production promise in `APPLICATION_DESCRIPTION.md` significantly exceeds what is currently implemented. The right next move is **not broad feature sprawl**, but a focused, test-backed MVP implementation sequence that locks down tenant isolation, RBAC, and the core task/meeting/presentation workflows first.
+1. Add asynchronous job execution (Celery/RQ) for very large files.
+2. Add data-domain presets (healthcare, logistics, finance) with domain-specific KPI templates.
+3. Add interactive dashboard filtering (date range, run type, source filename, domain tag).
+4. Add report versioning + diff summaries between analysis runs.
+5. Add enterprise observability: run durations, failure taxonomy, per-tenant usage quotas.

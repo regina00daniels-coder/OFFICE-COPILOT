@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Login{% endblock %}
+{% block content %}
+<section class="auth-shell card">
+  <h2>Sign In</h2>
+  <p class="hint">Access your tenant workspace.</p>
+  <form method="post" class="form-grid">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    {% for field in form %}
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {{ field.errors }}
+    {% endfor %}
+    <button type="submit">Login</button>
+  </form>
+  <p class="hint">No account? <a href="{% url 'register' %}">Create one</a></p>
+</section>
+{% endblock %}

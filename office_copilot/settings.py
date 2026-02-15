@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from apps.reporting.ai_runtime import get_runtime_profile
 
 load_dotenv()
 
@@ -9,7 +10,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "dev-only-secret-key")
 DEBUG = os.getenv("DJANGO_DEBUG", "True") == "True"
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+
+
+def _build_allowed_hosts() -> list[str]:
+    raw = os.getenv("DJANGO_ALLOWED_HOSTS", "").strip()
+    default_hosts = ["localhost", "127.0.0.1", "0.0.0.0"]
+    if not raw:
+        hosts = default_hosts
+    else:
+        hosts = [h.strip() for h in raw.split(",") if h.strip()]
+        if not hosts:
+            hosts = default_hosts
+    if DEBUG and "testserver" not in hosts:
+        hosts.append("testserver")
+    return hosts
+
+
+ALLOWED_HOSTS = _build_allowed_hosts()
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -84,7 +101,7 @@ USE_TZ = True
 
 AUTH_USER_MODEL = "accounts.User"
 
-LOGIN_URL = "/admin/login/"
+LOGIN_URL = "/auth/login/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -94,3 +111,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+OFFICE_CPU_TARGET = os.getenv("OFFICE_CPU_TARGET", "0.75")
+OFFICE_EMBED_MODEL = os.getenv("OFFICE_EMBED_MODEL", "nltk-frequency")
+
+# Initialize runtime profile early so thread controls are active before heavy processing.
+RUNTIME_PROFILE = get_runtime_profile()

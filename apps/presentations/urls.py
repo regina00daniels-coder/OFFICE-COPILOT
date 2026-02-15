@@ -1,7 +1,8 @@
 from django.urls import path
 
-from .views import text_to_presentation
+from .views import text_to_presentation, word_to_presentation
 
 urlpatterns = [
     path("ai/text-to-presentation/", text_to_presentation, name="text-to-presentation"),
+    path("ai/word-to-presentation/", word_to_presentation, name="word-to-presentation"),
 ]

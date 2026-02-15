@@ -24,8 +24,10 @@
 - Cross-tenant access raises `PermissionDenied`.
 - Role gating (`admin`, `staff`, `user`) controls privileged actions such as report creation.
 
-## API Endpoints
+## UI & API Endpoints
+- `GET /dashboard/`
 - `GET /api/dashboard/summary/`
+- `GET /api/dashboard/activity/`
 - `GET|POST /api/tasks/`
 - `GET|POST /api/meetings/`
 - `GET|POST /api/reporting/`
